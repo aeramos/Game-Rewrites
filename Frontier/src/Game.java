@@ -1,11 +1,13 @@
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 public class Game {
     private final Scanner scanner;
     private final Player player;
     private final List<City> cities;
+    private final Random random = new Random();
 
     public Game() {
         scanner = new Scanner(System.in);
@@ -16,7 +18,7 @@ public class Game {
     public void play() {
         System.out.println("Welcome to Frontier. Copyright (c) Alejandro Ramos, 2022, MIT Licence.");
         System.out.println("You are " + player.name);
-        while(true) {
+        while (true) {
             changePrices();
             travel();
             city();
@@ -31,9 +33,64 @@ public class Game {
     public void travel() {
         System.out.println("You are in: " + player.location.name);
         List<City> destinations = player.location.destinations(cities, player.getRange());
-        System.out.println("You can go to " + Arrays.toString(destinations.toArray()));
-        System.out.print("Destination (index starting at zero): ");
-        player.location = destinations.get(scanner.nextInt());
+        System.out.println("You can go to: ");
+        for (int i = 0; i < destinations.size(); i++) {
+            System.out.println(i + " - " + destinations.get(i).name + "(" + ((int)(player.location.distanceTo(destinations.get(i)) / 25) + 1) + " days)");
+        }
+        System.out.print("Destination: ");
+        int selection = scanner.nextInt();
+        int hours = ((int)(player.location.distanceTo(destinations.get(selection)) / 25) + 1) * 24;
+        player.location = destinations.get(selection);
+        int currentHour = 0;
+        player.health = Player.MAX_HEALTH;
+        while (currentHour < hours) {
+            System.out.println("Hour " + currentHour++);
+            if (random.nextInt(10) >= 9) {
+                System.out.println("You have encountered a bandit.");
+                if (!combat(new NPCParty("Bandit", 1, 1, 0))) {
+                    System.out.println("You have died. Game over.");
+                    System.exit(0);
+                }
+            }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException ignored) {}
+        }
+    }
+
+    public boolean combat(NPCParty enemy) {
+        while (true) {
+            System.out.println("You are fighting " + enemy.name);
+            System.out.println("You have " + player.health + "% health");
+            System.out.println("Enemy has " + enemy.health + "% health");
+            System.out.print("Attack (1) or attempt to flee (2): ");
+            int selection = scanner.nextInt();
+            switch (selection) {
+                case 1 -> {
+                    System.out.println("You attack " + enemy.name + " dealing " + Party.combat(player, enemy) + " damage.");
+                    if (enemy.health == 0) {
+                        System.out.println("You have killed " + enemy.name);
+                        return true;
+                    }
+                }
+                case 2 -> {
+                    System.out.println("You attempt to flee.");
+                    if (random.nextBoolean()) {
+                        System.out.println("You successfully flee from " + enemy.name);
+                        return true;
+                    } else {
+                        System.out.println("You failed to flee from " + enemy.name);
+                    }
+                }
+                default -> System.out.println("Invalid input. Move wasted.");
+            }
+
+            System.out.println(enemy.name + " attacks you, dealing " + Party.combat(enemy, player) + " damage.");
+            if (player.health == 0) {
+                System.out.println("You have died fighting " + enemy.name);
+                return false;
+            }
+        }
     }
 
     public void city() {
@@ -57,7 +114,7 @@ public class Game {
     public void buy() {
         System.out.println("Buy from the market in " + player.location.name);
         while (true) {
-            System.out.println("You have " + player.money);
+            System.out.println("You have " + player.money + " coins");
 
             Item.Material[] items = Item.Material.values();
             printItems(Arrays.asList(items));
@@ -86,7 +143,7 @@ public class Game {
     public void sell() {
         System.out.println("Sell to the market in " + player.location.name);
         while (true) {
-            System.out.println("You have " + player.money);
+            System.out.println("You have " + player.money + " coins");
             printItems(player.inventory);
             System.out.print("Your pick (-1 to leave): ");
             int selection = scanner.nextInt();
