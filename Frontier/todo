@@ -1,0 +1,16 @@
+list of features missing:
+cities having a limited stock of items
+viewing the prices of other cities without going to them
+other npcs, both friendly neutral and enemy
+other members of party
+combat
+base combat
+equipping items
+factions and their quests/missions
+reputation
+crime rate
+
+refreshing the stock should change it by more variable amounts than +/- 10%
+ideally the city would store the slope of the price graph, meaning that if the price started rising quickly (steep slope),
+it would keep on rising for a while as the slope evens out again
+make the randomness not a 50/50 chance. make it like 70/30 with 70% chance to do the previous action to the slope (either increase or decrease by 1% or 2% or something).
