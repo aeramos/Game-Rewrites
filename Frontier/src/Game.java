@@ -9,6 +9,10 @@ public class Game {
     private final List<City> cities;
     private final Random random = new Random();
 
+    public enum TravelEvent {
+        ENEMY, LOOT, NOTHING
+    }
+
     public Game() {
         scanner = new Scanner(System.in);
         cities = City.generateCities();
@@ -39,23 +43,76 @@ public class Game {
         }
         System.out.print("Destination: ");
         int selection = scanner.nextInt();
-        int hours = ((int)(player.location.distanceTo(destinations.get(selection)) / 25) + 1) * 24;
+        City origin = player.location;
         player.location = destinations.get(selection);
+
+        int hours = ((int)(origin.distanceTo(destinations.get(selection)) / 25) + 1) * 24;
         int currentHour = 0;
         player.health = Player.MAX_HEALTH;
         while (currentHour < hours) {
             System.out.println("Hour " + currentHour++);
-            if (random.nextInt(10) >= 9) {
-                System.out.println("You have encountered a bandit.");
-                if (!combat(new NPCParty("Bandit", 1, 1, 0))) {
-                    System.out.println("You have died. Game over.");
-                    System.exit(0);
+            TravelEvent event = getTravelEvent(origin, player.location, progress(currentHour, hours));
+            switch (event) {
+                case ENEMY -> {
+                    System.out.println("You have encountered a bandit.");
+                    if (!combat(new NPCParty("Bandit", 1, 5, 2))) {
+                        System.out.println("You have died. Game over.");
+                        System.exit(0);
+                    }
+                }
+                case LOOT -> {
+                    System.out.println("You have found some unattended crates on the side of the road.");
+                    System.out.println("Do you (1) loot the crates or (2) leave them?");
+                    selection = scanner.nextInt();
+                    if (selection == 1) {
+                        int loot = loot(origin, player.location, progress(currentHour, hours));
+                        System.out.println("You loot the crates and find " + loot + " coins.");
+                        player.money += loot;
+                    } else {
+                        System.out.println("You leave the crates.");
+                    }
                 }
             }
+
             try {
                 Thread.sleep(250);
             } catch (InterruptedException ignored) {}
         }
+    }
+
+    /**
+     * Returns a TravelEvent that accounts for the player's position between two cities. This means that a route will
+     * become more dangerous as the player approaches a dangerous city from a safe one.
+     *
+     * @param origin      the city the player starts traveling from
+     * @param destination the city the player will arrive at
+     * @param progress    how close the player is to the destination, as a percentage (from 0 to 100)
+     * @return a travel event corresponding with the player's position between the two cities
+     */
+    private TravelEvent getTravelEvent(City origin, City destination, byte progress) {
+        double danger = travelingAverage(origin.danger, destination.danger, progress);
+
+        int randomValue = random.nextInt(100);
+        if (randomValue < 10) {
+            if (random.nextInt(101) <= danger) {
+                return TravelEvent.ENEMY;
+            }
+        } else if (randomValue == 99) {
+            return TravelEvent.LOOT;
+        }
+        return TravelEvent.NOTHING;
+    }
+
+    private byte progress(int currentHour, int totalHours) {
+        return (byte)(((double)currentHour / totalHours) * 100);
+    }
+
+    private double travelingAverage(int origin, int destination, byte progress) {
+        return (origin * ((100 - progress) / 100d)) + (destination * ((progress / 100d)));
+    }
+
+    private int loot(City origin, City destination, byte progress) {
+        return (int)(250 * travelingAverage(origin.wealth, destination.wealth, progress) / 100);
     }
 
     public boolean combat(NPCParty enemy) {
