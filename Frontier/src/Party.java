@@ -5,7 +5,6 @@ public abstract class Party {
 
     public static int combat(Party attacker, Party defender) {
         int difference = attacker.getAttack() - defender.getDefense();
-        System.out.println("difference = " + difference);
         if (difference > 0) {
             defender.health = defender.health - difference;
             if (defender.health < 0) {
