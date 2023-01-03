@@ -98,9 +98,22 @@ public class Game {
         }
     }
 
-    // determine net worth from standard prices of inventory and equipment
+    /**
+     * @return total player net worth determined by held coins and standard prices of inventory,
+     * weapons, and armor.
+     */
     public int score() {
-        return -1;
+        int score = player.money;
+        for (int i = 0; i < player.inventory.size(); i++) {
+            score += player.inventory.get(i).getStandardPrice();
+        }
+        if (player.weapon != null) {
+            score += player.weapon.getStandardPrice();
+        }
+        if (player.armor != null) {
+            score += player.armor.getStandardPrice();
+        }
+        return score;
     }
 
     /**

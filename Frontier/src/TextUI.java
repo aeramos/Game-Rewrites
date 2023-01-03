@@ -1,15 +1,26 @@
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class TextUI {
     private final Game game;
-    private final Scanner scanner = new Scanner(System.in);
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final List<Map.Entry<String, Integer>> highscores = new ArrayList<>();
 
     public static void main(String... args) {
-        TextUI textUI = new TextUI(new Game("John"));
-        System.out.println("Welcome to Frontier. Copyright (c) Alejandro Ramos, 2022, MIT Licence.");
-        System.out.println("You have finished with a score of: " + textUI.play());
+        do {
+            System.out.println("Welcome to Frontier. Copyright (c) Alejandro Ramos, 2022, MIT Licence.");
+            System.out.print("What is your name: ");
+            TextUI textUI = new TextUI(new Game(scanner.nextLine()));
+            int score = textUI.play();
+            System.out.println("You have finished with a score of: " + score);
+            highscores.add(new AbstractMap.SimpleImmutableEntry<>(textUI.game.player.name, score));
+            highscores.sort(Comparator.comparingInt(Map.Entry::getValue));
+            System.out.println("High scores: ");
+            for (int i = highscores.size() - 1; i >= 0; i--) {
+                System.out.println(highscores.get(i).getKey() + ": " + highscores.get(i).getValue());
+            }
+            System.out.println("Would you like to play again (y/n)?");
+        } while (scanner.nextLine().equals("y"));
+        System.out.println("Thank you for playing. Goodbye.");
     }
 
     public TextUI(Game game) {
@@ -51,6 +62,7 @@ public class TextUI {
         }
         System.out.print("Destination: ");
         int selection = scanner.nextInt();
+        scanner.nextLine();
         game.destination = destinations.get(selection);
     }
 
@@ -69,6 +81,7 @@ public class TextUI {
                 } else {
                     System.out.println("You leave the crates.");
                 }
+                scanner.nextLine();
             }
         }
     }
@@ -87,6 +100,7 @@ public class TextUI {
         System.out.println("Enemy has " + combatData.enemy().health + "% health");
         System.out.println("Attack (1) or attempt to flee (2): ");
         int selection = scanner.nextInt();
+        scanner.nextLine();
         switch (selection) {
             case 1 -> {
                 System.out.println("You attack " + combatData.enemy().name + " dealing " + game.attack() + " damage.");
@@ -111,6 +125,7 @@ public class TextUI {
         while (true) {
             System.out.print("(1) Buy, 2 Sell, 3 Weapons, 4 Armor, 5 Vessel, 6 Party 7 Tavern. -1 to leave: ");
             int selection = scanner.nextInt();
+            scanner.nextLine();
             switch (selection) {
                 case 1 -> buy();
                 case 2 -> sell();
@@ -131,6 +146,7 @@ public class TextUI {
 
             System.out.print("Your pick (-1 to leave): ");
             int selection = scanner.nextInt();
+            scanner.nextLine();
             if (selection == -1) {
                 break;
             }
@@ -156,6 +172,7 @@ public class TextUI {
             printItems(game.player.inventory);
             System.out.print("Your pick (-1 to leave): ");
             int selection = scanner.nextInt();
+            scanner.nextLine();
             if (selection == -1) {
                 break;
             }
