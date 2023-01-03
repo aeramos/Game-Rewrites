@@ -2,8 +2,9 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Handles game logic and stores game information. The game is driven by the UI since it waits for
- * user input before doing anything.
+ * A Game object holds and controls all game state data including information about players, enemies,
+ * and cities. The game is driven by the UI in that it only advances when the UI interacts with it,
+ * but all processing and game logic is handled here.
  */
 public class Game {
     public final Player player;
@@ -23,6 +24,13 @@ public class Game {
         player = new Player(playerName, cities.get(0), 1000);
     }
 
+    /**
+     * Advances the current state and returns the new data associated with the current player
+     * activity: travel, combat, or none.
+     *
+     * @return the information for the current "activity" in the form of {@link TravelData} or
+     * {@link CombatData}, or null if the player is not traveling.
+     */
     public Record getState() {
         if (enemy != null) {
             if (lastState == travelData) {
@@ -33,9 +41,9 @@ public class Game {
         } else if (destination != null) {
             if (travelData == null) {
                 int totalHours = ((int)(player.location.distanceTo(destination) / 25) + 1) * 24;
-                travelData = new TravelData(destination, totalHours, 1, getTravelEvent(player.location, destination, progress(0, totalHours)));
+                travelData = new TravelData(destination, 1, totalHours, getTravelEvent(player.location, destination, progress(0, totalHours)));
             } else {
-                travelData = new TravelData(travelData.destination(), travelData.totalHours(), travelData.hoursTravelled() + 1, getTravelEvent(player.location, travelData.destination(), progress(0, travelData.totalHours())));
+                travelData = new TravelData(travelData.destination(), travelData.hoursTravelled() + 1, travelData.totalHours(), getTravelEvent(player.location, travelData.destination(), progress(0, travelData.totalHours())));
                 if (travelData.hoursTravelled() == travelData.totalHours()) {
                     player.location = destination;
                     destination = null;
@@ -92,12 +100,6 @@ public class Game {
         return price;
     }
 
-    public void changePrices() {
-        for (City city : cities) {
-            city.changePrices();
-        }
-    }
-
     /**
      * @return total player net worth determined by held coins and standard prices of inventory,
      * weapons, and armor.
@@ -116,14 +118,20 @@ public class Game {
         return score;
     }
 
+    private void changePrices() {
+        for (City city : cities) {
+            city.changePrices();
+        }
+    }
+
     /**
      * Returns a TravelEvent that accounts for the player's position between two cities. For example, a route will
      * become more dangerous as the player approaches a dangerous city from a safe one, causing more bandits to appear.
      *
      * @param origin      the city the player starts traveling from
      * @param destination the city the player will arrive at
-     * @param progress    how close the player is to the destination, as a percentage (from 0 to 100)
-     * @return a travel event corresponding with the player's position between the two cities
+     * @param progress    how close the player is to the destination as a percentage from 0 to 100
+     * @return a travel event indicating if the player encountered an enemy, loot, or nothing
      */
     private TravelEvent getTravelEvent(City origin, City destination, byte progress) {
         double danger = travelingAverage(origin.danger, destination.danger, progress);
